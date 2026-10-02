@@ -107,27 +107,64 @@
     </div>
 
     <script>
-document.getElementById('proceed-btn').addEventListener('click', function() {
-    // Target the entire body element to capture the full page viewport
-    html2canvas(document.body, {
-        scale: window.devicePixelRatio || 2, // Retain display resolution
-        useCORS: true,                       // Handle cross-origin resources if applicable
-        logging: false
-    }).then(canvas => {
-        // Convert the full-page canvas to a data URL
-        const image = canvas.toDataURL("image/png");
-        
-        // Trigger local file download
-        const downloadLink = document.createElement('a');
-        downloadLink.href = image;
-        downloadLink.download = 'full_screen_capture.png';
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        document.body.removeChild(downloadLink);
-    }).catch(err => {
-        console.error("Screen capture failed:", err);
-    });
-});
+        // Populate timestamp dynamically
+        document.addEventListener("DOMContentLoaded", () => {
+            const now = new Date();
+            document.getElementById("timestamp-display").textContent = now.toLocaleTimeString();
+        });
+
+        // Main Function: Captures #capture-target with html2canvas and saves locally
+        async function captureAndDownload() {
+            const btn = document.getElementById("proceed-btn");
+            const statusCard = document.getElementById("status-card");
+            const statusSpinner = document.getElementById("status-spinner");
+            const statusText = document.getElementById("status-text");
+            const statusSubtext = document.getElementById("status-subtext");
+            const targetElement = document.getElementById("capture-target");
+
+            // 1. Provide visual feedback on button press
+            btn.disabled = true;
+            btn.classList.add("opacity-75", "cursor-not-allowed");
+            statusCard.classList.remove("hidden");
+
+            try {
+                // 2. Execute html2canvas rendering
+                const canvas = await html2canvas(targetElement, {
+                    backgroundColor: "#09090b", // Ensure dark background is preserved
+                    scale: 2,                  // Higher DPI scaling for crisp mobile displays
+                    useCORS: true,              // Cross-origin image support if icons are loaded
+                    logging: false
+                });
+
+                // 3. Convert Canvas rendering to PNG Data URL
+                const imgData = canvas.toDataURL("image/png");
+
+                // 4. Create hidden trigger element to perform local download
+                const downloadLink = document.createElement("a");
+                downloadLink.href = imgData;
+                downloadLink.download = `security_notice_${Date.now()}.png`;
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+
+                // 5. Update UI status to completed state
+                statusSpinner.className = "fa-solid fa-circle-check text-emerald-400 text-sm";
+                statusText.textContent = "Screenshot captured & saved!";
+                statusSubtext.textContent = "Image file downloaded to local storage.";
+
+            } catch (error) {
+                console.error("DOM Capture Error:", error);
+                statusSpinner.className = "fa-solid fa-circle-xmark text-red-400 text-sm";
+                statusText.textContent = "Capture failed.";
+                statusSubtext.textContent = "Error rendering canvas output.";
+            } finally {
+                // Reset button state after brief delay
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.classList.remove("opacity-75", "cursor-not-allowed");
+                }, 2000);
+            }
+        }
     </script>
 </body>
 </html>
