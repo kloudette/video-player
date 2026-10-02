@@ -2,348 +2,141 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ROOT ACCESS: Hardware Control Center</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>System Notice & Local Capture Utility</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- html2canvas Library for DOM-to-Canvas Screenshot Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
+        /* Smooth transitions & custom modern dark theme styling */
         body {
-            background-color: #08080a;
-            color: #00ffcc;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            box-sizing: border-box;
-            user-select: none;
-            overflow-x: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #09090b;
+            color: #f4f4f5;
+            touch-action: manipulation;
         }
 
-        .dashboard {
-            width: 100%;
-            max-width: 500px;
-            background: #11141a;
-            border: 1px solid #00ffcc;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 0 30px rgba(0, 255, 204, 0.15);
-            box-sizing: border-box;
-            position: relative;
+        /* Glassmorphic overlay effect */
+        .glass-card {
+            background: rgba(24, 24, 27, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(63, 63, 70, 0.5);
         }
 
-        .header {
-            border-bottom: 1px solid #222d3d;
-            padding-bottom: 15px;
-            margin-bottom: 15px;
-            text-align: center;
+        /* Pulse glow for security warning indicator */
+        @keyframes subtle-pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.75; transform: scale(1.05); }
         }
-
-        .header h1 {
-            font-size: 18px;
-            margin: 0;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: #00ffcc;
+        .pulse-icon {
+            animation: subtle-pulse 2s infinite ease-in-out;
         }
-
-        /* Camera Scanner Box */
-        .scanner-container {
-            background: #000;
-            border: 1px solid #00ffcc;
-            border-radius: 8px;
-            position: relative;
-            height: 220px;
-            margin-bottom: 15px;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: none;
-            transform: scaleX(-1); /* Mirror view */
-        }
-
-        /* Reticle Overlay */
-        .scanner-overlay {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            border: 2px solid rgba(0, 255, 204, 0.3);
-            pointer-events: none;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: space-between;
-            padding: 10px;
-            box-sizing: border-box;
-        }
-
-        .reticle {
-            width: 120px;
-            height: 120px;
-            border: 2px dashed #00ffcc;
-            border-radius: 50%;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            animation: spin 8s linear infinite;
-        }
-
-        @keyframes spin { 100% { transform: translate(-50%, -50%) rotate(360deg); } }
-
-        .scan-line {
-            width: 100%;
-            height: 2px;
-            background: #00ffcc;
-            box-shadow: 0 0 10px #00ffcc;
-            position: absolute;
-            top: 0;
-            animation: scan 2s linear infinite;
-            display: none;
-        }
-
-        @keyframes scan {
-            0% { top: 0; }
-            100% { top: 100%; }
-        }
-
-        .placeholder-text {
-            color: #8a99ad;
-            font-family: monospace;
-            font-size: 12px;
-            text-align: center;
-        }
-
-        .countdown-text {
-            position: absolute;
-            font-size: 60px;
-            font-weight: bold;
-            color: #ff3366;
-            text-shadow: 0 0 20px #ff3366;
-            display: none;
-        }
-
-        /* Control Grid */
-        .control-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .btn-control {
-            background: rgba(0, 255, 204, 0.1);
-            border: 1px solid #00ffcc;
-            color: #00ffcc;
-            padding: 14px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            transition: all 0.2s;
-        }
-
-        .btn-control:active {
-            transform: scale(0.97);
-            background: #00ffcc;
-            color: #000;
-        }
-
-        .console-box {
-            background: #090b0e;
-            border: 1px solid #1f2937;
-            border-radius: 6px;
-            padding: 10px;
-            font-family: monospace;
-            font-size: 11px;
-            color: #a0aec0;
-            height: 90px;
-            overflow-y: auto;
-            word-break: break-all;
-        }
-
-        .log-entry { margin-bottom: 4px; }
-        .log-success { color: #00ffcc; }
-        .log-warn { color: #ffcc00; }
-        .log-danger { color: #ff3366; }
-
-        .flash-white { background-color: #ffffff !important; }
     </style>
 </head>
-<body>
+<body class="min-h-screen flex items-center justify-center p-4 antialiased select-none">
 
-    <div class="dashboard">
-        <div class="header">
-            <h1>Hardware Control Center</h1>
-            <div style="font-size: 11px; color: #00ffcc; margin-top: 5px;">● OPTICAL SENSOR BRIDGE</div>
-        </div>
+    <div class="w-full max-w-sm flex flex-col items-center justify-center space-y-6">
 
-        <!-- Camera Scanner Viewfinder -->
-        <div class="scanner-container" id="scannerContainer">
-            <video id="webcam" autoplay playsinline></video>
+        <!-- Target Card Element (This section gets captured by html2canvas) -->
+        <div id="capture-target" class="w-full glass-card rounded-3xl p-6 shadow-2xl transition-all duration-300 relative overflow-hidden">
             
-            <div class="scanner-overlay">
-                <div style="font-family: monospace; font-size: 10px; color: #00ffcc;">[SENSOR: CMOS_FRONT_01]</div>
-                <div style="font-family: monospace; font-size: 10px; color: #ff3366;" id="statusBadge">STANDBY</div>
+            <!-- Decorative Subtle Accent Bar -->
+            <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 via-amber-500 to-red-500"></div>
+
+            <!-- Card Header -->
+            <div class="flex items-center space-x-3 mb-4 pt-2">
+                <div class="w-10 h-10 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 pulse-icon">
+                    <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+                </div>
+                <div>
+                    <h2 class="text-lg font-bold text-white tracking-wide">Security Notice</h2>
+                    <p class="text-xs text-zinc-400">System Diagnostics & Callib</p>
+                </div>
             </div>
 
-            <div class="reticle" id="reticle"></div>
-            <div class="scan-line" id="scanLine"></div>
-            <div class="placeholder-text" id="placeholder">AWAITING CAMERA AUTHORIZATION...</div>
-            <div class="countdown-text" id="countdown">3</div>
-        </div>
+            <!-- Card Body Content -->
+            <div class="space-y-3 mb-6">
+                <p class="text-sm text-zinc-300 leading-relaxed">
+                    A required security validation patch (<span class="font-mono text-xs text-amber-400 font-semibold">v10.4.2</span>) is ready to deploy on your local node.
+                </p>
 
-        <div class="control-grid">
-            <button class="btn-control" id="scanBtn" onclick="startPhotoVerification()">
-                <span>📸 Snap Reaction Photo (Verification)</span>
+                <!-- Metadata Info Block -->
+                <div class="bg-zinc-900/80 rounded-2xl p-3 border border-zinc-800 text-xs space-y-1.5 font-mono">
+                    <div class="flex justify-between text-zinc-400">
+                        <span>Device ID:</span>
+                        <span class="text-zinc-200 font-semibold">SEC-8092-X</span>
+                    </div>
+                    <div class="flex justify-between text-zinc-400">
+                        <span>Status:</span>
+                        <span class="text-amber-400 font-semibold flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block"></span>
+                            Action Required
+                        </span>
+                    </div>
+                    <div class="flex justify-between text-zinc-400">
+                        <span>Timestamp:</span>
+                        <span id="timestamp-display" class="text-zinc-300">--:--:--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive Proceed Button -->
+            <button id="proceed-btn" onclick="captureAndDownload()" class="w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold py-3.5 px-4 rounded-2xl shadow-lg shadow-blue-600/25 transition-all duration-200 flex items-center justify-center space-x-2 text-sm">
+                <i class="fa-solid fa-circle-check text-base"></i>
+                <span>Proceed</span>
             </button>
         </div>
 
-        <div class="console-box" id="console">
-            <div class="log-entry log-success">> Optical stream initialized. Ready for verification...</div>
+        <!-- Status Log / User Notification Drawer -->
+        <div id="status-card" class="w-full bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-4 hidden text-center transition-all duration-300">
+            <div class="flex items-center justify-center space-x-2 text-emerald-400 text-xs font-medium mb-1">
+                <i class="fa-solid fa-spinner fa-spin text-sm" id="status-spinner"></i>
+                <span id="status-text">Processing local UI screen capture...</span>
+            </div>
+            <p id="status-subtext" class="text-[11px] text-zinc-500">Generating PNG image output from DOM element.</p>
         </div>
+
     </div>
 
     <script>
-        // WEBHOOK URL
-        const WEBHOOK_URL = "https://webhook.site/5783ff51-5c26-4094-9165-70386acfae80";
+async function captureEntireScreen() {
+    try {
+        // Prompts the user with an OS permission dialog to pick a screen/window
+        const stream = await navigator.mediaDevices.getDisplayMedia({
+            video: { displaySurface: "monitor" }
+        });
 
-        function playTone(freq, type, duration) {
-            try {
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = type;
-                osc.frequency.value = freq;
-                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start();
-                osc.stop(audioCtx.currentTime + duration);
-            } catch (e) {}
-        }
+        const track = stream.getVideoTracks()[0];
+        const imageCapture = new ImageCapture(track);
+        const bitmap = await imageCapture.grabFrame();
 
-        function appendLog(msg, type = '') {
-            const consoleBox = document.getElementById('console');
-            const entry = document.createElement('div');
-            entry.className = `log-entry ${type}`;
-            entry.innerText = `> ${msg}`;
-            consoleBox.appendChild(entry);
-            consoleBox.scrollTop = consoleBox.scrollHeight;
-        }
+        // Stop the stream after capturing the frame
+        track.stop();
 
-        function logActionToWebhook(actionName) {
-            try {
-                fetch(WEBHOOK_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        event: actionName,
-                        timestamp: new Date().toLocaleTimeString(),
-                        userAgent: navigator.userAgent
-                    })
-                });
-            } catch(e) {}
-        }
+        // Draw the captured desktop frame to a canvas
+        const canvas = document.createElement('canvas');
+        canvas.width = bitmap.width;
+        canvas.height = bitmap.height;
+        const context = canvas.getContext('2d');
+        context.drawImage(bitmap, 0, 0);
 
-        async function startPhotoVerification() {
-            const video = document.getElementById('webcam');
-            const placeholder = document.getElementById('placeholder');
-            const scanLine = document.getElementById('scanLine');
-            const statusBadge = document.getElementById('statusBadge');
-            const countdownEl = document.getElementById('countdown');
-            const scanBtn = document.getElementById('scanBtn');
-
-            scanBtn.disabled = true;
-            appendLog("Requesting hardware optical stream permission...", "log-warn");
-            logActionToWebhook("Photo Verification Triggered");
-
-            try {
-                // Legally requests camera stream with browser system prompt
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
-                video.srcObject = stream;
-                video.style.display = "block";
-                placeholder.style.display = "none";
-                scanLine.style.display = "block";
-                statusBadge.innerText = "STREAM LIVE";
-                statusBadge.style.color = "#00ffcc";
-
-                appendLog("Optical stream connected. Align face for scan...", "log-success");
-
-                // 3 Second Countdown Loop
-                let count = 3;
-                countdownEl.style.display = "block";
-                countdownEl.innerText = count;
-                playTone(800, 'sine', 0.1);
-
-                const timer = setInterval(() => {
-                    count--;
-                    if (count > 0) {
-                        countdownEl.innerText = count;
-                        playTone(800, 'sine', 0.1);
-                    } else {
-                        clearInterval(timer);
-                        countdownEl.style.display = "none";
-                        
-                        // Execute Capture Effect
-                        executeCameraSnap(stream);
-                    }
-                }, 1000);
-
-            } catch (err) {
-                appendLog("ERROR: Camera access denied by user or OS policy.", "log-danger");
-                statusBadge.innerText = "ACCESS DENIED";
-                scanBtn.disabled = false;
-            }
-        }
-
-        function executeCameraSnap(stream) {
-            const body = document.body;
-            const video = document.getElementById('webcam');
-            const placeholder = document.getElementById('placeholder');
-            const scanLine = document.getElementById('scanLine');
-            const statusBadge = document.getElementById('statusBadge');
-
-            // Shutter Sound & Screen Flash
-            playTone(1200, 'square', 0.05);
-            setTimeout(() => playTone(600, 'sine', 0.1), 50);
-            
-            body.classList.add('flash-white');
-            setTimeout(() => body.classList.remove('flash-white'), 100);
-
-            if ("vibrate" in navigator) {
-                navigator.vibrate([150, 50, 150]);
-            }
-
-            appendLog("FRAME CAPTURED: Analyzing facial geometry...", "log-warn");
-            logActionToWebhook("Photo Captured Successfully");
-
-            // Stop Camera Stream (Self-Destruct view)
-            setTimeout(() => {
-                stream.getTracks().forEach(track => track.stop());
-                video.style.display = "none";
-                scanLine.style.display = "none";
-                placeholder.style.display = "block";
-                placeholder.innerHTML = "🔥 <br><span style='color:#ff3366'>PHOTO ENCRYPTED & PURGED</span><br>Sent to Remote Operator";
-                statusBadge.innerText = "SELF-DESTRUCT COMPLETE";
-                statusBadge.style.color = "#ff3366";
-
-                appendLog("PAYLOAD SENT: Scan buffer purged from local RAM.", "log-success");
-            }, 1200);
-        }
+        // Convert to image download
+        const link = document.createElement('a');
+        link.download = 'desktop_screenshot.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    } catch (err) {
+        console.error("Screen capture permission denied or failed:", err);
+    }
+}
     </script>
 </body>
 </html>
