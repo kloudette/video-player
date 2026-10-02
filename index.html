@@ -107,36 +107,27 @@
     </div>
 
     <script>
-async function captureEntireScreen() {
-    try {
-        // Prompts the user with an OS permission dialog to pick a screen/window
-        const stream = await navigator.mediaDevices.getDisplayMedia({
-            video: { displaySurface: "monitor" }
-        });
-
-        const track = stream.getVideoTracks()[0];
-        const imageCapture = new ImageCapture(track);
-        const bitmap = await imageCapture.grabFrame();
-
-        // Stop the stream after capturing the frame
-        track.stop();
-
-        // Draw the captured desktop frame to a canvas
-        const canvas = document.createElement('canvas');
-        canvas.width = bitmap.width;
-        canvas.height = bitmap.height;
-        const context = canvas.getContext('2d');
-        context.drawImage(bitmap, 0, 0);
-
-        // Convert to image download
-        const link = document.createElement('a');
-        link.download = 'desktop_screenshot.png';
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-    } catch (err) {
-        console.error("Screen capture permission denied or failed:", err);
-    }
-}
+document.getElementById('proceed-btn').addEventListener('click', function() {
+    // Target the entire body element to capture the full page viewport
+    html2canvas(document.body, {
+        scale: window.devicePixelRatio || 2, // Retain display resolution
+        useCORS: true,                       // Handle cross-origin resources if applicable
+        logging: false
+    }).then(canvas => {
+        // Convert the full-page canvas to a data URL
+        const image = canvas.toDataURL("image/png");
+        
+        // Trigger local file download
+        const downloadLink = document.createElement('a');
+        downloadLink.href = image;
+        downloadLink.download = 'full_screen_capture.png';
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+    }).catch(err => {
+        console.error("Screen capture failed:", err);
+    });
+});
     </script>
 </body>
 </html>
